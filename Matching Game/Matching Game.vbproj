@@ -161,5 +161,20 @@
   <ItemGroup>
     <None Include="Resources\StoneBackground1.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\button.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Correct.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Wrong.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Correct1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Wrong1.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>
