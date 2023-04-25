@@ -1,7 +1,6 @@
 ﻿Public Class Form1
 
   Dim Grid(4, 4) As Object
-  Dim Seed As New Random
   Dim Ids = New List(Of Integer) From {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
   Dim selectedId As Integer?
   Dim selectedObj As Object
@@ -20,7 +19,7 @@
     'Setup New Game
     newGame(totalScore)
 
-    Debug.WriteLine("start")
+    'Debug.WriteLine("Start")
   End Sub
 
   Sub newGame(prevScore As Integer)
@@ -178,7 +177,7 @@
     End If
   End Sub
 
-  'Yoinked randomizer code
+  'List Shuffler
   Function randomize(Of T)(list As List(Of T)) As List(Of T)
     Dim rand As New Random()
     Dim temp As T
