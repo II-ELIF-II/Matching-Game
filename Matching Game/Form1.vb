@@ -7,7 +7,6 @@
   Dim canSelectBlock As Boolean
   Dim winScore As Integer
   Dim totalScore As Integer = 0
-
   Dim timeSpan As TimeSpan
   Dim totalMoves As Integer = 0
   Dim currentTime As Integer = 0
@@ -21,16 +20,19 @@
     Next
 
     'Setup New Game
-    newGame(totalScore, True)
-
-    'Debug.WriteLine("Start")
+    newGame(totalScore)
+    Debug.WriteLine("GAME START!")
   End Sub
 
-  Sub newGame(prevScore As Integer, newGame As Boolean)
+  'New game function is responsible for resetting the entire game and mits various functions
+  'New games should always start with a prevScore of (0)
+  'prevScore allows for passing of the previous score if the newgame is created from the win condition
+  Sub newGame(prevScore As Integer)
+    'Disallow player from interacting with the grid
     canSelectBlock = False
 
     'LifeBar
-    If newGame Then
+    If prevScore = 0 Then
       LifeBar.Value = 8
     End If
     updateLifeBarVisual()
@@ -52,22 +54,26 @@
       Next
     Next
 
+    'Reset UI elements and related variables
     totalMoves = 0
-    totalMovesCounter.Text = "Total Moves: " & totalMoves
-
+    updateTotalMoves(totalMoves)
     winScore = 0
     totalScore = prevScore
-    totalScoreCounter.Text = "Total Score: " & totalScore
+    updateTotalScore(totalScore)
 
     'Shuffle IDs in list
     randomize(Ids)
 
+    'Clear selections
     selectedId = Nothing
     selectedObj = Nothing
 
+    'Allow player to interact with the grid again
     canSelectBlock = True
   End Sub
 
+  'winnerWindow function is responsible for calculating any additional score the player may receive based on time and totalMoves
+  'as well as providing the player a way to start a new round without losing their stats from the previous rounds
   Sub winnerWindow()
     MatchTimer.Stop()
 
@@ -92,25 +98,29 @@
 
     updateTotalScore(totalScore)
 
+    'Show winner Dialogue and proccede depending on result
     Dim result As DialogResult = MessageBox.Show("Would you like to play again?", "YOU ARE WINNER!", MessageBoxButtons.YesNo, MessageBoxIcon.Information)
     If result = DialogResult.Yes Then
-      newGame(totalScore, False)
+      newGame(totalScore)
     Else
       Close()
     End If
   End Sub
 
+  'failWindow function is responsible for showing the player a fail dialogue and the ability to start a new game
   Sub failWindow()
     Dim result As DialogResult = MessageBox.Show("Would you like to play again?", "YOU ARE LOSER :(", MessageBoxButtons.YesNo, MessageBoxIcon.Information)
     If result = DialogResult.Yes Then
-      newGame(0, True)
+      newGame(0)
     Else
       Close()
     End If
   End Sub
 
+  'blockClick is responsible for managing gameplay interactions and how they will react to said interactions
   Sub blockClick(Id As Integer, Display As Object)
     If canSelectBlock Then
+      'Disallow player from interacting with the grid
       canSelectBlock = False
       If selectedId Is Nothing And selectedObj Is Nothing Then
         'If this is the first item selected
@@ -118,6 +128,7 @@
         selectedId = Id
         selectedObj = Display
 
+        'Show clicked block
         showBlock(Id, Display)
 
         Debug.WriteLine("SELECTED!")
@@ -128,21 +139,24 @@
         Display.Enabled = False
         selectedObj.Enabled = False
 
+        'Show clicked block
         showBlock(Id, Display)
 
         selectedId = Nothing
         selectedObj = Nothing
 
-        'Incorrect move counter
+        'Life bar calculation
         If (LifeBar.Value = 7) Then
           LifeBar.Value = 8
         ElseIf (LifeBar.Value < 8) Then
           LifeBar.Value += 2
         End If
+
         'Moves Counter
         totalMoves += 1
         updateTotalMoves(totalMoves)
         winScore += 1
+
         'Score Counter
         totalScore += 1
         updateTotalScore(totalScore)
@@ -159,15 +173,19 @@
         'If the second item does not match
         markBlock(Display, selectedObj, 2)
 
+        'Show selected block
         showBlock(Id, Display)
 
+        'Wait 1 second to show player both blocks
         wait(1)
 
+        'Rehide both blocks
         hideBlock(Display)
         hideBlock(selectedObj)
 
         markBlock(Display, selectedObj, 3)
 
+        'Clear selection
         selectedId = Nothing
         selectedObj = Nothing
 
@@ -186,6 +204,7 @@
         Debug.WriteLine("WRONG!")
       End If
       updateLifeBarVisual()
+      'Allow player to interact with the grid again
       canSelectBlock = True
     End If
   End Sub
@@ -207,6 +226,8 @@
   Sub updateLifeBarVisual()
     If LifeBar.Value > 6 Then
       LifeBar.ForeColor = Color.Lime
+    ElseIf LifeBar.Value > 4 Then
+      LifeBar.ForeColor = Color.YellowGreen
     ElseIf LifeBar.Value > 2 Then
       LifeBar.ForeColor = Color.Orange
     Else
@@ -484,7 +505,7 @@
   End Sub
 
   Private Sub newGameButton_Click(sender As Object, e As EventArgs) Handles newGameButton.Click
-    newGame(0, True)
+    newGame(0)
   End Sub
 
   Private Sub MatchTimer_Tick(sender As Object, e As EventArgs) Handles MatchTimer.Tick
