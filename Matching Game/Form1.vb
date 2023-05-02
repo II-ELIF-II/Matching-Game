@@ -297,7 +297,7 @@
     End If
   End Sub
 
-  'List Shuffler
+  'List Shuffler based on Fisher Yates
   Function randomize(Of T)(list As List(Of T)) As List(Of T)
     Dim rand As New Random()
     Dim temp As T
