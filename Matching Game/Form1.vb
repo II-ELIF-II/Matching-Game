@@ -5,8 +5,12 @@
   Dim selectedId As Integer?
   Dim selectedObj As Object
   Dim canSelectBlock As Boolean
-  Dim score As Integer
+  Dim winScore As Integer
   Dim totalScore As Integer = 0
+
+  Dim timeSpan As TimeSpan
+  Dim totalMoves As Integer = 0
+  Dim currentTime As Integer = 0
 
   Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
     'Assign elements to Grid
@@ -17,13 +21,26 @@
     Next
 
     'Setup New Game
-    newGame(totalScore)
+    newGame(totalScore, True)
 
     'Debug.WriteLine("Start")
   End Sub
 
-  Sub newGame(prevScore As Integer)
+  Sub newGame(prevScore As Integer, newGame As Boolean)
     canSelectBlock = False
+
+    'LifeBar
+    If newGame Then
+      LifeBar.Value = 8
+    End If
+    updateLifeBarVisual()
+
+    'Timer function
+    MatchTimer.Stop()
+    currentTime = 0
+    updateTimer()
+    MatchTimer.Start()
+    MatchTimer.Interval = 1000
 
     'Refresh Block Grid
     For rowIndex = 0 To GameGrid.RowCount - 1
@@ -35,10 +52,13 @@
       Next
     Next
 
-    score = 0
-    scoreCounter.Text = score
+    totalMoves = 0
+    totalMovesCounter.Text = "Total Moves: " & totalMoves
+
+    winScore = 0
     totalScore = prevScore
-    totalScoreCounter.Text = totalScore
+    totalScoreCounter.Text = "Total Score: " & totalScore
+
     'Shuffle IDs in list
     randomize(Ids)
 
@@ -49,9 +69,41 @@
   End Sub
 
   Sub winnerWindow()
+    MatchTimer.Stop()
+
+    'Calculate additional score based on moves
+    'Additional score is provided if maximum moves is less than the least amount of required moves (16) and an additional (8) moves
+    'Additional score is based on the 8 additional score, therefor providing the player (8) total additional score that they can achieve
+    If totalMoves < 24 Then
+      totalMoves -= 16
+      If totalMoves > 0 Then
+        totalScore += (8 - totalMoves)
+        Debug.WriteLine("ADDITIONAL SCORE ON MOVES: " & (8 - totalMoves))
+      End If
+    End If
+
+    'Calculate additional score based on time
+    'Additional score is provided if the game lasts not longer than (120) seconds
+    'Additional score is based on the current time divided by (120) seconds, with a multiplier of (10), therefor providing the player (10) total additional score that they can achieve
+    If currentTime < 120 Then
+      totalScore += (10 - ((currentTime / 120) * 10))
+      Debug.WriteLine("ADDITIONAL SCORE ON TIME: " & (10 - ((currentTime / 120) * 10)))
+    End If
+
+    updateTotalScore(totalScore)
+
     Dim result As DialogResult = MessageBox.Show("Would you like to play again?", "YOU ARE WINNER!", MessageBoxButtons.YesNo, MessageBoxIcon.Information)
     If result = DialogResult.Yes Then
-      newGame(totalScore)
+      newGame(totalScore, False)
+    Else
+      Close()
+    End If
+  End Sub
+
+  Sub failWindow()
+    Dim result As DialogResult = MessageBox.Show("Would you like to play again?", "YOU ARE LOSER :(", MessageBoxButtons.YesNo, MessageBoxIcon.Information)
+    If result = DialogResult.Yes Then
+      newGame(0, True)
     Else
       Close()
     End If
@@ -81,12 +133,22 @@
         selectedId = Nothing
         selectedObj = Nothing
 
-        score += 1
-        scoreCounter.Text = score
+        'Incorrect move counter
+        If (LifeBar.Value = 7) Then
+          LifeBar.Value = 8
+        ElseIf (LifeBar.Value < 8) Then
+          LifeBar.Value += 2
+        End If
+        'Moves Counter
+        totalMoves += 1
+        updateTotalMoves(totalMoves)
+        winScore += 1
+        'Score Counter
         totalScore += 1
-        totalScoreCounter.Text = totalScore
+        updateTotalScore(totalScore)
 
-        If score = 8 Then
+        'Win Condition
+        If winScore = 8 Then
           winnerWindow()
           Debug.WriteLine("YOU ARE WINNER!")
         End If
@@ -109,9 +171,46 @@
         selectedId = Nothing
         selectedObj = Nothing
 
+        'Moves Counter
+        totalMoves += 1
+        updateTotalMoves(totalMoves)
+
+        'Fail and Lifebar condition
+        If LifeBar.Value = 0 Then
+          failWindow()
+          Debug.WriteLine("YOU ARE LOSER :(")
+        Else
+          LifeBar.Value -= 1
+        End If
+
         Debug.WriteLine("WRONG!")
       End If
+      updateLifeBarVisual()
       canSelectBlock = True
+    End If
+  End Sub
+
+  Sub updateTotalMoves(totalMoves As String)
+    totalMovesCounter.Text = "Total Moves: " & totalMoves
+  End Sub
+
+  Sub updateTotalScore(totalScore As String)
+    totalScoreCounter.Text = "Total Score: " & totalScore
+  End Sub
+
+  Sub updateTimer()
+    currentTime += 1
+    timeSpan = TimeSpan.FromSeconds(currentTime)
+    timerCount.Text = "Time: " & timeSpan.Hours.ToString.PadLeft(2, "0"c) & " : " & timeSpan.Minutes.ToString.PadLeft(2, "0"c) & " : " & timeSpan.Seconds.ToString.PadLeft(2, "0"c)
+  End Sub
+
+  Sub updateLifeBarVisual()
+    If LifeBar.Value > 6 Then
+      LifeBar.ForeColor = Color.Lime
+    ElseIf LifeBar.Value > 2 Then
+      LifeBar.ForeColor = Color.Orange
+    Else
+      LifeBar.ForeColor = Color.Red
     End If
   End Sub
 
@@ -385,6 +484,10 @@
   End Sub
 
   Private Sub newGameButton_Click(sender As Object, e As EventArgs) Handles newGameButton.Click
-    newGame(0)
+    newGame(0, True)
+  End Sub
+
+  Private Sub MatchTimer_Tick(sender As Object, e As EventArgs) Handles MatchTimer.Tick
+    updateTimer()
   End Sub
 End Class
